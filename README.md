@@ -1,20 +1,15 @@
-![Build Status](https://travis-ci.org/niilo/clamav-rest.svg) [![Docker Pulls](https://img.shields.io/docker/pulls/niilo/clamav-rest.svg)]()
-
-This is two in one docker image so it runs open source virus scanner ClamAV (https://www.clamav.net/), automatic virus definition updates as background process and REST api interface to interact with ClamAV process.
-
-Travis CI build will build new release on weekly basis and push those to Docker hub [ClamAV-rest docker image](https://hub.docker.com/r/niilo/clamav-rest/). Virus definitions will be updated on every docker build.
-
-
 ## Usage:
 
 Run clamav-rest docker image:
 ```bash
-docker run -p 9000:9000 --rm -it niilo/clamav-rest
+docker run -p 9000:9000 -e CLAM_USERNAME=username -e CLAM_PASSWORD=password --rm -it karunsiri/clamav-rest
 ```
+where you provide HTTP basic authentication credentials via `CLAM_USERNAME` and
+`CLAM_PASSWORD` environment variables.
 
 Test that service detects common test virus signature:
 ```bash
-$ curl -i -F "file=@eicar.com.txt" http://localhost:9000/scan
+$ curl -i -u username:password -F "file=@eicar.com.txt" http://localhost:9000/scan
 HTTP/1.1 100 Continue
 
 HTTP/1.1 406 Not Acceptable
@@ -27,7 +22,7 @@ Content-Length: 56
 
 Test that service returns 200 for clean file:
 ```bash
-$ curl -i -F "file=@clamrest.go" http://localhost:9000/scan
+$ curl -i -u username:password -F "file=@clamrest.go" http://localhost:9000/scan
 
 HTTP/1.1 100 Continue
 
@@ -38,6 +33,9 @@ Content-Length: 33
 
 { Status: "OK", Description: "" }
 ```
+
+where `-u username:password` is the credentials given to an image via
+`CLAM_USERNAME` and `CLAM_PASSWORD` environment variables.
 
 **Status codes:**
 - 200 - clean file = no KNOWN infections
@@ -52,6 +50,6 @@ Content-Length: 33
 Build golang (linux) binary and docker image:
 ```bash
 env GOOS=linux GOARCH=amd64 go build
-docker build . -t niilo/clamav-rest
-docker run -p 9000:9000 --rm -it niilo/clamav-rest
+docker build . -t <your_username>/clamav-rest
+docker run -p 9000:9000 -e CLAM_USERNAME=username -e CLAM_PASSWORD=password --rm -it <your_username>/clamav-rest
 ```

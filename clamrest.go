@@ -98,6 +98,27 @@ func waitForClamD(port string, times int) {
 	}
 }
 
+func basicAuth(handler func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		username, password, _ := req.BasicAuth()
+
+		if !authenticate(username, password) {
+			http.Error(w, "Unauthorized", 401)
+			return
+		}
+
+		handler(w, req)
+	}
+}
+
+func authenticate(username string, password string) bool {
+	if username != opts["CLAM_USERNAME"] || password != opts["CLAM_PASSWORD"] {
+		return false
+	}
+
+	return true
+}
+
 func main() {
 
 	opts = make(map[string]string)
@@ -117,7 +138,7 @@ func main() {
 
 	fmt.Printf("Connected to clamd on %v\n", opts["CLAMD_PORT"])
 
-	http.HandleFunc("/scan", scanHandler)
+	http.HandleFunc("/scan", basicAuth(scanHandler))
 	http.HandleFunc("/", home)
 
 	//Listen on port PORT
